@@ -1,8 +1,11 @@
-/**
- * Converts an integer (between 1 and 3999) to its Roman numeral equivalent.
- */
+function trackEvent(eventName, params) {
+  if (typeof gtag === 'function') {
+    gtag('event', eventName, params);
+  }
+}
+
 function integerToRoman(num) {
-  if (num <= 0 || num >= 4000) {
+  if (!Number.isInteger(num) || num < 1 || num > 3999) {
     throw new Error('The number must be between 1 and 3999.');
   }
 
@@ -24,38 +27,35 @@ function integerToRoman(num) {
 
   let result = '';
 
-  for (const { value, numeral } of romanNumerals) {
-    while (num >= value) {
-      result += numeral;
-      num -= value;
+  for (const item of romanNumerals) {
+    while (num >= item.value) {
+      result += item.numeral;
+      num -= item.value;
     }
   }
 
   return result;
 }
 
-/**
- * Converts a Roman numeral string to its integer equivalent.
- */
 function romanToInteger(roman) {
   if (typeof roman !== 'string' || roman.trim() === '') {
     throw new Error('Input must be a valid Roman numeral.');
   }
 
-  roman = roman.toUpperCase();
+  roman = roman.trim().toUpperCase();
 
   if (!/^[IVXLCDM]+$/.test(roman)) {
     throw new Error('The Roman numeral contains invalid characters.');
   }
 
   const romanMap = {
-    'I': 1,
-    'V': 5,
-    'X': 10,
-    'L': 50,
-    'C': 100,
-    'D': 500,
-    'M': 1000
+    I: 1,
+    V: 5,
+    X: 10,
+    L: 50,
+    C: 100,
+    D: 500,
+    M: 1000
   };
 
   let total = 0;
@@ -73,22 +73,16 @@ function romanToInteger(roman) {
     previousValue = currentValue;
   }
 
-  const reconversion = integerToRoman(total);
-
-  if (reconversion !== roman) {
+  if (integerToRoman(total) !== roman) {
     throw new Error('The Roman numeral is not in canonical form.');
   }
 
   return total;
 }
 
-/**
- * Handles the conversion process
- */
 function handleConversion() {
   const mode = document.getElementById('conversionMode').value;
   const input = document.getElementById('inputValue').value.trim();
-
   const resultDiv = document.getElementById('result');
   const errorDiv = document.getElementById('error');
 
@@ -97,50 +91,34 @@ function handleConversion() {
 
   try {
     if (mode === 'intToRoman') {
-      const num = parseInt(input, 10);
-
-      if (isNaN(num)) {
-        throw new Error('Please enter a valid integer number.');
-      }
-
+      const num = Number(input);
       const roman = integerToRoman(num);
-
       resultDiv.textContent = `Roman Numeral: ${roman}`;
 
-      // Google Analytics event
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', {
-          conversion_type: 'int_to_roman'
-        });
-      }
+      trackEvent('conversion_success', {
+        conversion_type: 'integer_to_roman'
+      });
 
     } else if (mode === 'romanToInt') {
-
       const num = romanToInteger(input);
-
       resultDiv.textContent = `Integer: ${num}`;
 
-      // Google Analytics event
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', {
-          conversion_type: 'roman_to_int'
-        });
-      }
+      trackEvent('conversion_success', {
+        conversion_type: 'roman_to_integer'
+      });
     }
 
   } catch (error) {
-
     errorDiv.textContent = error.message;
 
-    // Google Analytics error event
-    if (typeof gtag === 'function') {
-      gtag('event', 'error', {
-        message: error.message
-      });
-    }
+    trackEvent('conversion_error', {
+      error_message: error.message
+    });
   }
 }
 
-document
-  .getElementById('convertButton')
-  .addEventListener('click', handleConversion);
+document.addEventListener('DOMContentLoaded', function () {
+  document
+    .getElementById('convertButton')
+    .addEventListener('click', handleConversion);
+});
